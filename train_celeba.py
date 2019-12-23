@@ -6,7 +6,7 @@ train_celeba.py
 import os
 
 from tiki import Trainer
-from ncsn.celeba import CelebaConv, load_celeba_data, load_celeba_small_data
+from ncsn.celeba import CelebaConv, load_celeba_data
 from ncsn.utils.visualize import *
 
 
@@ -49,10 +49,4 @@ if __name__ == "__main__":
         ncsn.to(device)
 
     while True:
-        # idx = torch.randperm(len(tr_dataset))[:9]
-        # labels = torch.stack([tr_dataset[i.item()][1] for i in idx], 0)
-        # labels = labels.to(device)
-        # samples = ncsn.sample_from(labels, return_all=True, identical_noise=True)
-        # samples = (samples - samples.min()) / (samples.max() - samples.min())
-        # visualize_samples(samples[:, :-25], size=(3, 3))
         visualize_random_samples(ncsn, num_classes=40, size=(4, 4))
