@@ -1,0 +1,4 @@
+artifact_location: file:///home/fodom/Documents/ncsn/mlruns/1
+experiment_id: '1'
+lifecycle_stage: active
+name: 4real

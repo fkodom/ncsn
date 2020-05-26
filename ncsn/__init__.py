@@ -1,2 +1,2 @@
-from ncsn.ncsn import NCSN
-from ncsn import mnist
+from ncsn.ncsn import NCSN, NCSNTrainingModule
+from ncsn.mnist import MnistNCSN, MnistTrainingModule

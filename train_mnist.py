@@ -1,55 +1,89 @@
 """
 train_mnist.py
---------
+--------------
 """
 
-import os
+import argparse
 
-from torch.utils.data import ConcatDataset
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 
-from tiki import Trainer
-from ncsn.mnist import MnistConv, load_mnist_data
+from ncsn import MnistTrainingModule
+from ncsn.utils.logger import custom_mlflow_logger
 from ncsn.utils.visualize import *
 
 
-if __name__ == "__main__":
-    # -------------------------- Runtime Parameters --------------------------
-    # model: str = ""
-    model: str = os.path.join("models", "MnistConv.dict")
-    train: bool = False
-    epochs: int = 25
-    batch_size: int = 100
-    # ------------------------------------------------------------------------
+def main(
+    experiment: str = "mnist",
+    run: str = None,
+    gpus: int = 0,
+    optimizer: str = "Adam",
+    lr: float = 1e-3,
+    epochs: int = 25,
+    batch_size: int = 150,
+    checkpoint: str = None,
+    eval_: bool = False,
+    debug: bool = True,
+):
+    ncsn = MnistTrainingModule(
+        experiment=experiment,
+        run=run,
+        optimizer=optimizer,
+        lr=lr,
+        epochs=epochs,
+        batch_size=batch_size,
+    )
+    if args.checkpoint is not None:
+        ncsn.load_from_checkpoint(args.checkpoint)
 
-    ncsn = MnistConv()
-    if model:
-        ncsn.load_state_dict(torch.load(model, map_location="cpu"))
-
-    if train:
-        print("Loading data... ", end="")
-        tr_dataset = ConcatDataset([load_mnist_data() for _ in range(5)])
-        print("done!")
-
-        Trainer().train(
-            ncsn,
-            tr_dataset=tr_dataset,
-            loss="mse",
-            optimizer="adam",
-            gpus=[0],
-            epochs=int(epochs),
-            batch_size=int(batch_size),
-            callbacks=[
-                "terminate_on_nan",
-                "model_checkpoint",
-                "tiki_hut"
-            ],
-        )
-
-    ncsn.eval()
-    if torch.cuda.is_available():
-        ncsn.cuda()
-
-    while True:
+    if eval_:
+        ncsn.eval()
+        if gpus:
+            ncsn.cuda()
         visualize_random_samples(ncsn)
-        # visualize_class_samples(ncsn, 3)
-        # visualize_class_iterations(ncsn, 0, 9)
+    else:
+        if not debug:
+            checkpoint_callback = ModelCheckpoint(
+                prefix=f"{experiment}_{run}_", filepath="models", monitor="loss",
+            )
+        else:
+            checkpoint_callback = None
+
+        pl.Trainer(
+            gpus=gpus,
+            max_epochs=epochs,
+            resume_from_checkpoint=checkpoint,
+            logger=custom_mlflow_logger(
+                experiment_name=experiment,
+                run_name=run,
+                debug=debug,
+            ),
+            checkpoint_callback=checkpoint_callback,
+            weights_summary=None,
+        ).fit(ncsn)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-x", "--experiment", default="mnist")
+    parser.add_argument("-r", "--run", default=None)
+    parser.add_argument("-g", "--gpus", default=0)
+    parser.add_argument("-o", "--optimizer", default="Adam")
+    parser.add_argument("-l", "--lr", default=1e-3)
+    parser.add_argument("-e", "--epochs", default=25)
+    parser.add_argument("-c", "--checkpoint", default=None)
+    parser.add_argument("--eval", action="store_true")
+    parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
+
+    main(
+        experiment=args.experiment,
+        run=args.run,
+        gpus=int(args.gpus),
+        optimizer=args.optimizer,
+        lr=float(args.lr),
+        epochs=int(args.epochs),
+        checkpoint=args.checkpoint,
+        eval_=args.eval,
+        debug=args.debug,
+    )

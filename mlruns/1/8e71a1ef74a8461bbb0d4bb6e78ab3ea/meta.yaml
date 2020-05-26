@@ -1,0 +1,15 @@
+artifact_uri: file:///home/fodom/Documents/ncsn/mlruns/1/8e71a1ef74a8461bbb0d4bb6e78ab3ea/artifacts
+end_time: 1590435823263
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 8e71a1ef74a8461bbb0d4bb6e78ab3ea
+run_uuid: 8e71a1ef74a8461bbb0d4bb6e78ab3ea
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1590435759561
+status: 3
+tags: []
+user_id: Frank Odom
